@@ -1,12 +1,12 @@
 <?php
 
-namespace Moox\Builder\Models;
+namespace Moox\Sync\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Builder extends Model
+class Sync extends Model
 {
-    protected $table = 'builder';
+    protected $table = 'sync';
 
     protected $fillable = [
         'name',

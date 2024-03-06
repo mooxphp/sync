@@ -1,6 +1,6 @@
 <?php
 
-namespace Moox\Builder\Commands;
+namespace Moox\Sync\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
@@ -20,14 +20,14 @@ class InstallCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'mooxbuilder:install';
+    protected $signature = 'mooxsync:install';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Installs Moox Builder, publishes configuration, migrations and registers plugins.';
+    protected $description = 'Installs Moox Sync, publishes configuration, migrations and registers plugins.';
 
     /**
      * Execute the console command.
@@ -66,31 +66,31 @@ class InstallCommand extends Command
 
     public function welcome(): void
     {
-        info('Welcome to Moox Builder Installer');
+        info('Welcome to Moox Sync Installer');
     }
 
     public function publish_configuration(): void
     {
         if (confirm('Do you wish to publish the configuration?', true)) {
-            info('Publishing Builder Configuration...');
-            $this->callSilent('vendor:publish', ['--tag' => 'builder-config']);
+            info('Publishing Sync Configuration...');
+            $this->callSilent('vendor:publish', ['--tag' => 'sync-config']);
         }
     }
 
     public function publish_migrations(): void
     {
-        if (Schema::hasTable('builder')) {
-            warning('The builder table already exists. The migrations will not be published.');
+        if (Schema::hasTable('sync')) {
+            warning('The sync table already exists. The migrations will not be published.');
         } elseif (confirm('Do you wish to publish the migrations?', true)) {
-            info('Publishing Builder Migrations...');
-            $this->callSilent('vendor:publish', ['--tag' => 'builder-migrations']);
+            info('Publishing Sync Migrations...');
+            $this->callSilent('vendor:publish', ['--tag' => 'sync-migrations']);
         }
     }
 
     public function run_migrations(): void
     {
         if (confirm('Do you wish to run the migrations?', true)) {
-            info('Running Builder Migrations...');
+            info('Running Sync Migrations...');
             $this->call('migrate');
         }
     }
@@ -107,12 +107,12 @@ class InstallCommand extends Command
 
             $intend = '                ';
 
-            $namespace = "\Moox\Builder";
+            $namespace = "\Moox\Sync";
 
             $pluginsToAdd = multiselect(
                 label: 'These plugins will be installed:',
-                options: ['BuilderPlugin'],
-                default: ['BuilderPlugin'],
+                options: ['SyncPlugin'],
+                default: ['SyncPlugin'],
             );
 
             $function = '::make(),';
@@ -157,6 +157,6 @@ class InstallCommand extends Command
 
     public function finish(): void
     {
-        note('Moox Builder installed successfully. Enjoy!');
+        note('Moox Sync installed successfully. Enjoy!');
     }
 }

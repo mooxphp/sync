@@ -1,6 +1,6 @@
 <?php
 
-namespace Moox\Builder\Resources;
+namespace Moox\Sync\Resources;
 
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\TextInput;
@@ -11,13 +11,13 @@ use Filament\Tables\Actions\DeleteBulkAction;
 use Filament\Tables\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Moox\Builder\Models\Builder;
-use Moox\Builder\Resources\BuilderResource\Pages\ListPage;
-use Moox\Builder\Resources\BuilderResource\Widgets\BuilderWidgets;
+use Moox\Sync\Models\Sync;
+use Moox\Sync\Resources\SyncResource\Pages\ListPage;
+use Moox\Sync\Resources\SyncResource\Widgets\SyncWidgets;
 
-class BuilderResource extends Resource
+class SyncResource extends Resource
 {
-    protected static ?string $model = Builder::class;
+    protected static ?string $model = Sync::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-play';
 
@@ -39,14 +39,14 @@ class BuilderResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
-                    ->label(__('builder::translations.name'))
+                    ->label(__('sync::translations.name'))
                     ->sortable(),
                 TextColumn::make('started_at')
-                    ->label(__('builder::translations.started_at'))
+                    ->label(__('sync::translations.started_at'))
                     ->since()
                     ->sortable(),
                 TextColumn::make('failed')
-                    ->label(__('builder::translations.failed'))
+                    ->label(__('sync::translations.failed'))
                     ->sortable(),
             ])
             ->defaultSort('name', 'desc')
@@ -75,28 +75,28 @@ class BuilderResource extends Resource
     public static function getWidgets(): array
     {
         return [
-            BuilderWidgets::class,
+            SyncWidgets::class,
         ];
     }
 
     public static function getModelLabel(): string
     {
-        return __('builder::translations.single');
+        return __('sync::translations.single');
     }
 
     public static function getPluralModelLabel(): string
     {
-        return __('builder::translations.plural');
+        return __('sync::translations.plural');
     }
 
     public static function getNavigationLabel(): string
     {
-        return __('builder::translations.navigation_label');
+        return __('sync::translations.navigation_label');
     }
 
     public static function getBreadcrumb(): string
     {
-        return __('builder::translations.breadcrumb');
+        return __('sync::translations.breadcrumb');
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -111,7 +111,7 @@ class BuilderResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('builder::translations.navigation_group');
+        return __('sync::translations.navigation_group');
     }
 
     public static function getNavigationSort(): ?int
