@@ -4,11 +4,13 @@
 
 Moox Sync is under hard development.
 
-Moox Sync enables you to synchronize records between Filament platforms.
+Moox Sync enables you to synchronize records between Moox platforms or other Filament and Laravel platforms.
 
 ## Manage Platforms
 
 First, you need to create a platform, better two. Even if you would be able to sync on the same platform (but different model), that is not the main idea of Sync.
+
+There are two Filament Resource to manage Platforms and Syncs.
 
 ## Manage Syncs
 
@@ -22,7 +24,7 @@ Here are some key components and the basic flow of Sync:
 
     -   `Platforms`: Manage and retrieve platform configurations.
     -   `Syncs`: Manage sync configurations, including CRUD operations for sync setups.
-    -   `Syncs for Platform`: Retrieve sync configurations specific to a platform. This API is essential for the `SyncApiJob` to query the latest sync configurations.
+    -   `Syncs for Platform`: Retrieve sync configurations specific to a platform. This API is essential for the -  -   `SyncApiJob` to query the latest sync configurations.
 
 -   **SyncApiJob**
 
@@ -48,13 +50,22 @@ Here are some key components and the basic flow of Sync:
         -   Validates the incoming data and checks for any transformation or field mapping requirements specified in the sync configuration.
         -   Triggers the `SyncJob` with the validated and transformed data.
 
-    **SyncJob**
+-    **SyncJob**
 
     -   Perform the actual data synchronization on the target platform.
     -   Flow:
         -   Executes the query on the target platform to create, update, or delete records based on the data received from the source platform.
         -   Handles conditions like conflict resolution (e.g., updating existing records if they match certain criteria).
         -   Logs success or failure, including error handling (e.g., retry logic if the sync fails due to temporary issues).
+
+-   **Sync Backup Job**
+
+    -   To ensure data consistency even when changes are made outside of Eloquent events, you can use the SyncBackupJob. This job compares and updates data based on your sync configurations.
+    
+    ```bash
+    php artisan sync:backup
+    ```
+
 
 ## Quick Installation
 
@@ -66,14 +77,6 @@ php artisan mooxsync:install
 ```
 
 Curious what the install command does? See manual installation below.
-
-## What it does
-
-<!--whatdoes-->
-
-This is my package sync
-
-<!--/whatdoes-->
 
 ## Manual Installation
 

@@ -27,10 +27,9 @@ class SyncListener
 
             if ($platform) {
                 $this->currentPlatformId = $platform->id;
-                // DEBUG
-                //Log::info('Platform found for domain: '.$domain);
+                $this->logdebug('Moox Sync: Platform found for domain: '.$domain);
             } else {
-                Log::warning("Platform not found for domain: {$domain}");
+                $this->logDebug("Platform not found for domain: {$domain}");
                 $this->currentPlatformId = null;
             }
         } catch (QueryException $e) {
@@ -48,16 +47,7 @@ class SyncListener
             $syncs = Sync::where('source_platform_id', $this->currentPlatformId)
                 ->where('status', true)
                 ->get();
-
-            // DEBUG
-            //Log::info('Register listener for platform: '.$this->currentPlatformId);
-            //Log::info('Count of Syncs '.$syncs->count());
-
             foreach ($syncs as $sync) {
-
-                // DEBUG
-                //Log::info('Register Listener for Sync '.$sync->id);
-
                 $this->registerModelListeners($sync);
             }
         }
@@ -67,29 +57,20 @@ class SyncListener
     {
         $modelClass = $sync->source_model;
 
-        Log::info('Listen to Events for '.$modelClass);
+        $this->logdebug('Moox Sync: Listen to Events for '.$modelClass);
 
         Event::listen("eloquent.created: {$modelClass}", function ($model) use ($sync) {
-
-            // DEBUG
-            //Log::info('Event created for '.$model->id);
-
+            $this->logdebug('Moox Sync: Event created for '.$model->id);
             $this->handleEvent($model, 'created', $sync);
         });
 
         Event::listen("eloquent.updated: {$modelClass}", function ($model) use ($sync) {
-
-            // DEBUG
-            //Log::info('Event updated for '.$model->title);
-
+            $this->logdebug('Moox Sync: Event updated for '.$model->title);
             $this->handleEvent($model, 'updated', $sync);
         });
 
         Event::listen("eloquent.deleted: {$modelClass}", function ($model) use ($sync) {
-
-            // DEBUG
-            //Log::info('Event deleted for '.$model->id);
-
+            $this->logdebug('Moox Sync: Event deleted for '.$model->id);
             $this->handleEvent($model, 'deleted', $sync);
         });
     }
@@ -103,48 +84,41 @@ class SyncListener
             'sync' => $sync->toArray(),
         ];
 
-        // DEBUG
-        Log::info('Invoke Webhook for '.$this->currentPlatformId);
+        $this->logdebug('Moox Sync: Invoke Webhook for '.$this->currentPlatformId);
 
         $this->invokeWebhook($sync, $syncData);
     }
 
     protected function invokeWebhook(Sync $sync, array $data)
     {
-        $webhookUrl = $sync->targetPlatform->domain.'/sync-webhook';
+        $webhookUrl = 'https://'.$sync->targetPlatform->domain.'/sync-webhook';
 
-        // DEBUG: Log the data and request method
-        Log::info('Push to Webhook:', ['url' => $webhookUrl, 'data' => $data]);
+        $this->logdebug('Moox Sync: Push to Webhook:', ['url' => $webhookUrl, 'data' => $data]);
 
-        /*
         try {
-        */
-        $response = Http::asJson()->post($webhookUrl, $data); // Ensuring JSON data format
+            $response = Http::asJson()->post($webhookUrl, $data);
 
-        Log::info('Request method:', ['method' => 'POST']); // Explicitly log the method
-
-        if ($response->successful()) {
-            Log::info('Webhook invoked successfully.', ['url' => $webhookUrl, 'response' => $response->body()]);
-        } elseif ($response->clientError()) {
-            Log::warning('Client error occurred when invoking webhook.', [
-                'url' => $webhookUrl,
-                'status' => $response->status(),
-                'response' => $response->body(),
-            ]);
-        } elseif ($response->serverError()) {
-            Log::error('Server error occurred when invoking webhook.', [
-                'url' => $webhookUrl,
-                'status' => $response->status(),
-                'response' => $response->body(),
-            ]);
-        } else {
-            Log::warning('Unexpected status code returned when invoking webhook.', [
-                'url' => $webhookUrl,
-                'status' => $response->status(),
-                'response' => $response->body(),
-            ]);
-        }
-        /*
+            if ($response->successful()) {
+                $this->logdebug('Moox Sync: Webhook invoked successfully.', ['url' => $webhookUrl, 'response' => $response->body()]);
+            } elseif ($response->clientError()) {
+                Log::warning('Client error occurred when invoking webhook.', [
+                    'url' => $webhookUrl,
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                ]);
+            } elseif ($response->serverError()) {
+                Log::error('Server error occurred when invoking webhook.', [
+                    'url' => $webhookUrl,
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                ]);
+            } else {
+                Log::warning('Unexpected status code returned when invoking webhook.', [
+                    'url' => $webhookUrl,
+                    'status' => $response->status(),
+                    'response' => $response->body(),
+                ]);
+            }
         } catch (RequestException $e) {
             Log::error('Error occurred during HTTP request to webhook.', [
                 'url' => $webhookUrl,
@@ -158,6 +132,12 @@ class SyncListener
                 'trace' => $e->getTraceAsString(),
             ]);
         }
-        */
+    }
+
+    protected function logDebug($message, array $context = [])
+    {
+        if (app()->environment() !== 'production') {
+            Log::debug($message, $context);
+        }
     }
 }

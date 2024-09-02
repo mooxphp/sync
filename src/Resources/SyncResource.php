@@ -4,6 +4,7 @@ namespace Moox\Sync\Resources;
 
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Hidden;
 use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
@@ -27,6 +28,7 @@ use Moox\Sync\Resources\SyncResource\Pages\CreateSync;
 use Moox\Sync\Resources\SyncResource\Pages\EditSync;
 use Moox\Sync\Resources\SyncResource\Pages\ListSyncs;
 use Moox\Sync\Resources\SyncResource\Pages\ViewSync;
+use Moox\Sync\Services\ModelCompatibilityChecker;
 
 class SyncResource extends Resource
 {
@@ -117,6 +119,7 @@ class SyncResource extends Resource
             foreach ($data['packages'] as $package => $packageData) {
                 if (! empty($packageData['models'])) {
                     foreach ($packageData['models'] as $modelName => $modelData) {
+                        $package = str_replace('Moox', '', str_replace(' ', '', ucwords(str_replace('_', ' ', $packageData['package']))));
                         $options["{$packageData['package']} - {$modelName}"] = "Moox\\{$package}\\Models\\{$modelName}";
                     }
                 }
@@ -194,7 +197,6 @@ class SyncResource extends Resource
                             $targetPlatformId = $get('target_platform_id');
                             $targetModel = $get('target_model');
 
-                            // Check if both the platform and model are the same
                             if ($sourcePlatformId === $targetPlatformId && $sourceModel === $targetModel) {
                                 $set('source_model', null);
 
@@ -205,6 +207,7 @@ class SyncResource extends Resource
                                     ->send();
                             } else {
                                 self::updateTitle($set, $get);
+                                self::checkModelCompatibility($set, $get);
                             }
                         }),
 
@@ -255,7 +258,6 @@ class SyncResource extends Resource
                             $targetPlatformId = $get('target_platform_id');
                             $targetModel = $get('target_model');
 
-                            // Check if both the platform and model are the same
                             if ($sourcePlatformId === $targetPlatformId && $sourceModel === $targetModel) {
                                 $set('target_model', null);
 
@@ -266,6 +268,7 @@ class SyncResource extends Resource
                                     ->send();
                             } else {
                                 self::updateTitle($set, $get);
+                                self::checkModelCompatibility($set, $get);
                             }
                         }),
 
@@ -329,13 +332,14 @@ class SyncResource extends Resource
                         ->default(true)
                         ->columnSpan(['default' => 12])
                         ->reactive()
-                        ->afterStateUpdated(fn ($state, callable $set, callable $get) => self::updateTitle($set, $get)),
+                        ->afterStateUpdated(fn ($state, callable $set, callable $get) => self::updateTitle($set, $get))
+                        ->disabled(fn ($get) => !$get('models_compatible')),
 
                     KeyValue::make('field_mappings')
                         ->label(__('core::sync.field_mappings'))
                         ->rules(['array'])
                         ->columnSpan(['default' => 12])
-                        ->hidden(fn ($get) => $get('sync_all_fields'))
+                        ->hidden(fn ($get) => $get('sync_all_fields') && $get('models_compatible'))
                         ->reactive()
                         ->afterStateUpdated(fn ($state, callable $set, callable $get) => self::updateTitle($set, $get)),
 
@@ -371,9 +375,46 @@ class SyncResource extends Resource
                         ->rules(['date'])
                         ->disabled()
                         ->columnSpan(['default' => 12]),
+
+                    Hidden::make('models_compatible')
+                        ->default(true),
+
+                    Hidden::make('compatibility_error'),
+
+                    Hidden::make('missing_columns'),
+
+                    Hidden::make('extra_columns'),
                 ]),
             ]),
         ]);
+    }
+
+    private static function checkModelCompatibility(callable $set, callable $get)
+    {
+        $sourceModel = $get('source_model');
+        $targetModel = $get('target_model');
+
+        if ($sourceModel && $targetModel) {
+            $compatibility = ModelCompatibilityChecker::checkCompatibility($sourceModel, $targetModel);
+
+            $set('models_compatible', $compatibility['compatible']);
+            $set('compatibility_error', $compatibility['error']);
+            $set('missing_columns', $compatibility['missingColumns']);
+            $set('extra_columns', $compatibility['extraColumns']);
+
+            if (!$compatibility['compatible']) {
+                $set('sync_all_fields', false);
+
+                $missingColumnsStr = implode(', ', $compatibility['missingColumns']);
+                $extraColumnsStr = implode(', ', $compatibility['extraColumns']);
+
+                Notification::make()
+                    ->title('Model Compatibility Warning')
+                    ->body("The selected models are not fully compatible. Missing columns: {$missingColumnsStr}. Extra columns: {$extraColumnsStr}. Please map fields manually.")
+                    ->warning()
+                    ->send();
+            }
+        }
     }
 
     public static function table(Table $table): Table
