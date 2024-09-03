@@ -1,5 +1,20 @@
 <?php
 
+/*
+|--------------------------------------------------------------------------
+| Moox Configuration
+|--------------------------------------------------------------------------
+|
+| This configuration file uses translatable strings. If you want to
+| translate the strings, you can do so in the language files
+| published from moox_core. Example:
+|
+| 'trans//core::core.all',
+| loads from common.php
+| outputs 'All'
+|
+*/
+
 return [
 
     /*
@@ -193,7 +208,7 @@ return [
 
     'sync_backup_job' => [
         'enabled' => true,
-        'frequency' => 'daily',
+        'frequency' => 'everyFiveMinutes', // hourly, daily, hourly, etc.
     ],
 
     /*
@@ -209,6 +224,22 @@ return [
 
     'sync_eloquent_listener' => [
         'enabled' => true,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Models with Platform Relations
+    |--------------------------------------------------------------------------
+    |
+    | List of models that should have platform relations.
+    |
+    */
+
+    'models_with_platform_relations' => [
+        'App\Models\User',
+        'Moox\User\Models\User',
+        'Moox\Press\Models\User',
+        // Add any other models here
     ],
 
 ];
