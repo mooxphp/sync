@@ -54,6 +54,7 @@ class SyncPlatformJob implements ShouldQueue
                 ]);
 
                 $this->sendWebhook($platform, $targetPlatform);
+
             } catch (\Exception $e) {
                 $this->logDebug('Error syncing platform', [
                     'source' => $this->currentPlatform->id,
